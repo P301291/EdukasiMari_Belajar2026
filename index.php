@@ -33,19 +33,19 @@
             </a>
             <a href="#" class="dashboard-nav-item" data-view="projects">
               <span class="nav-icon material-symbols-rounded">folder</span>
-              <span class="nav-label">Projects</span>
+              <span class="nav-label">Pendaftar</span>
             </a>
             <a href="#" class="dashboard-nav-item" data-view="tasks">
               <span class="nav-icon material-symbols-rounded">checklist</span>
-              <span class="nav-label">Tasks</span>
+              <span class="nav-label">Pembelajaran</span>
             </a>
             <a href="#" class="dashboard-nav-item" data-view="reports">
               <span class="nav-icon material-symbols-rounded">bar_chart</span>
-              <span class="nav-label">Reports</span>
+              <span class="nav-label">Laporan</span>
             </a>
             <a href="#" class="dashboard-nav-item" data-view="settings">
               <span class="nav-icon material-symbols-rounded">settings</span>
-              <span class="nav-label">Settings</span>
+              <span class="nav-label">Pengaturan</span>
             </a>
           </div>
         </nav>
@@ -108,7 +108,7 @@
                     <div class="theme-option" data-theme="dark">Dark</div>
                   </div>
                 </div>
-                <a href="#" class="user-menu-item">
+                <a href="login.php" class="user-menu-item">
                   <span class="icon material-symbols-rounded">logout</span>
                   <span>Sign Out</span>
                 </a>

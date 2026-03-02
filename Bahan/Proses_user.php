@@ -7,7 +7,7 @@ $username = $_POST['username'];
 $password = $_POST['password']; 
 
 // 2. Gunakan placeholder (?) alih-alih memasukkan variabel langsung
-$sql = "SELECT * FROM login WHERE username = ? AND password = ?"; 
+$sql = "SELECT * FROM user WHERE username = ? AND password = ?"; 
 
 // 3. Menyiapkan pernyataan (Prepare)
 $stmt = $conn->prepare($sql);
@@ -26,7 +26,7 @@ if ($stmt) {
     if ($result->num_rows > 0) { 
         // Login Berhasil
         $_SESSION['username'] = $username; 
-        header("Location: Dashboard.php"); 
+        header("Location: index.php"); 
         exit(); // Selalu gunakan exit setelah header location
     } else { 
         // Login Gagal

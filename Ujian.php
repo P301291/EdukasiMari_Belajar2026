@@ -1,10 +1,60 @@
 <?php
 session_start();
+$conn = mysqli_connect("localhost", "root", "", "database1");
+
+if (isset($_SESSION['username'])) {
+    $u = $_SESSION['username'];
+    // Ambil status dari sinyal JavaScript (Active atau Idle)
+    $status_fisik = isset($_GET['status']) ? $_GET['status'] : 'Idle';
+    
+    // Jika user sedang aktif (gerak mouse/ketik), is_online tetap 1
+    // Jika user tidak gerak (Idle), is_online jadi 0 tapi last_activity tetap "Active"
+    $is_online = ($status_fisik == 'Active') ? 1 : 0;
+
+    mysqli_query($conn, "UPDATE user SET 
+        last_login = NOW(), 
+        is_online = $is_online, 
+        last_activity = 'Active' 
+        WHERE username = '$u'");
+}
+?>
+<script>
+let userStatus = "Active";
+let idleTimer;
+
+// Fungsi untuk lapor ke server
+function sendHeartbeat() {
+    fetch('heartbeat.php?status=' + userStatus);
+}
+
+// Fungsi deteksi aktifitas (gerak mouse, tekan tombol, scroll)
+function resetIdleTimer() {
+    userStatus = "Active";
+    clearTimeout(idleTimer);
+    // Jika dalam 30 detik tidak ada gerakan, status berubah jadi Idle
+    idleTimer = setTimeout(() => {
+        userStatus = "Idle";
+    }, 30000); 
+}
+
+// Event listener untuk aktifitas fisik
+window.onload = resetIdleTimer;
+window.onmousemove = resetIdleTimer;
+window.onmousedown = resetIdleTimer;
+window.ontouchstart = resetIdleTimer;
+window.onclick = resetIdleTimer;
+window.onkeypress = resetIdleTimer;
+
+// Kirim laporan ke server setiap 10 detik
+setInterval(sendHeartbeat, 10000);
+</script>
+<?php
+
 include 'koneksi.php';
 
 // 1. Proteksi Login
 if (!isset($_SESSION['username'])) { 
-    header("location:login.php"); 
+    header("location:login_user.php"); 
     exit(); 
 }
 
@@ -50,18 +100,68 @@ if (!$sudah_selesai) {
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); color: var(--dark); min-height: 100vh; user-select: none; -webkit-tap-highlight-color: transparent; }
 
-        /* --- HEADER --- */
         header {
             background: var(--white); padding: 12px 20px; display: flex; 
             justify-content: space-between; align-items: center;
             box-shadow: 0 4px 20px rgba(0,0,0,0.03); z-index: 100; position: sticky; top: 0;
         }
         .logo-text { font-weight: 800; color: var(--p); font-size: 16px; }
-        .user-pill { display: flex; align-items: center; gap: 8px; padding: 5px 12px; background: #f1f4f9; border-radius: 50px; }
-        .user-pill img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; }
-        .user-name { font-size: 12px; font-weight: 800; }
 
-        /* --- MODAL STYLE (Notifikasi Sesuai Sistem) --- */
+        /* Container Akun & Notifikasi */
+        .account-section { display: flex; align-items: center; gap: 12px; }
+        
+        /* Fitur Notifikasi */
+        .notif-wrapper {
+            position: relative;
+            cursor: pointer;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f4f9;
+            border-radius: 10px;
+            color: var(--dark);
+            transition: 0.3s;
+        }
+        .notif-wrapper:hover { background: #e2e8f0; }
+        .notif-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 5px;
+            border-radius: 50px;
+            border: 2px solid white;
+        }
+
+        /* User Pill Baru dengan Status Aktif */
+        .user-pill { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            padding: 4px 4px 4px 15px; 
+            background: #f1f4f9; 
+            border-radius: 50px; 
+        }
+        .user-meta { display: flex; flex-direction: column; text-align: right; }
+        .user-name { font-size: 12px; font-weight: 800; color: var(--dark); line-height: 1.2; }
+        .user-status { 
+            font-size: 10px; 
+            font-weight: 600; 
+            color: var(--success); 
+            display: flex; 
+            align-items: center; 
+            justify-content: flex-end;
+            gap: 4px; 
+        }
+        .status-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; display: inline-block; }
+        .user-pill img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
+
+        /* Modal & Exam Styles */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9);
             z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -78,7 +178,6 @@ if (!$sudah_selesai) {
         .step-text h4 { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
         .step-text p { font-size: 12px; color: var(--text-light); line-height: 1.4; }
 
-        /* --- LAYOUT UTAMA --- */
         .main-wrapper { display: flex; flex-direction: column; } 
         .exam-area { flex: 1; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 800px; }
@@ -89,7 +188,6 @@ if (!$sudah_selesai) {
         }
         .soal-card.active { display: block; animation: fadeIn 0.3s ease-out; }
         
-        /* Fix Tampilan Rumus & Kode */
         .pertanyaan-text { 
             font-size: 17px; line-height: 1.6; font-weight: 700; 
             white-space: pre-wrap; word-wrap: break-word; margin-bottom: 20px; 
@@ -102,7 +200,6 @@ if (!$sudah_selesai) {
         }
         .opsi.selected { background: var(--p); color: white; border-color: var(--p); }
 
-        /* --- SIDEBAR & NAV --- */
         .sidebar { width: 100%; background: var(--white); padding: 25px; border-top: 1px solid #eee; }
         .timer-box { background: #f1f4f9; padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
         .nav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; }
@@ -114,7 +211,7 @@ if (!$sudah_selesai) {
             display: flex; justify-content: space-between; gap: 10px; 
             padding: 15px; background: var(--white); position: sticky; bottom: 0; border-top: 1px solid #eee;
         }
-        .btn-nav-action { flex: 1; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-nav-action { flex: 1; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
 
         @media (min-width: 992px) {
             .main-wrapper { flex-direction: row; height: calc(100vh - 70px); }
@@ -142,27 +239,31 @@ if (!$sudah_selesai) {
                 <div class="step-icon"><i class='bx bx-time-five'></i></div>
                 <div class="step-text">
                     <h4>Waktu Terbatas</h4>
-                    <p>Anda memiliki waktu 60 menit untuk menyelesaikan semua soal.</p>
+                    <p>60 menit untuk semua soal.</p>
                 </div>
             </div>
             <div class="guide-step">
-                <div class="step-icon"><i class='bx bx-select-multiple'></i></div>
+                <div class="step-icon"><i class='bx bx-check-shield'></i></div>
                 <div class="step-text">
-                    <h4>Akses</h4>
-                    <p>Peserta hanya dikasih satu kali akses</p>
+                    <h4>Sistem Wajib Isi</h4>
+                    <p>Semua soal harus dijawab sebelum hasil dapat dikirimkan.</p>
                 </div>
             </div>
             <div class="guide-step">
-                <div class="step-icon"><i class='bx bx-select-multiple'></i></div>
+                <div class="step-icon"><i class='bx bx-check-shield'></i></div>
                 <div class="step-text">
-                    <h4>Pengiriman Soal</h4>
-                    <p>Setelah klik kirim akan otomatis terkunci.</p>
+                    <h4>Pengiriman Jawaban</h4>
+                    <p>Peserta hanya punya akses sekali.</p>
                 </div>
             </div>
 
             <button onclick="mulaiUjian()" class="btn-nav-action" style="background: var(--p); color: white; width: 100%;">
                 Mulai Ujian Sekarang <i class='bx bx-right-arrow-alt'></i>
             </button>
+            <a href="absensi2.php" class="btn-nav-action" title="Kembali ke Dashboard">
+    <i class='bx bx-chevron-left'></i>
+    <span>Kembali</span>
+</a>
         </div>
     </div>
     <?php endif; ?>
@@ -178,8 +279,11 @@ if (!$sudah_selesai) {
                 <h1 style="font-size: 50px; color: var(--dark);"><?= round($data_nilai['skor']) ?></h1>
                 <p style="color: var(--success); font-weight: 700; font-size: 14px;">Benar: <?= $data_nilai['benar'] ?></p>
             </div>
-            <a href="login_user.php" class="btn-nav-action" style="background: var(--dark); color: white; text-decoration: none;">
-                <i class='bx bx-log-out'></i> Keluar Aplikasi
+            <a href="cetak_kartu.php" class="btn-nav-action" style="background: var(--dark); color: white; margin-bottom: 10px;">
+                <i class='bx bx-printer'></i> Cetak Kartu 
+            </a>
+            <a href="Absensi2.php" class="btn-nav-action" style="background: #f1f4f9; color: var(--dark);">
+                <i class='bx bx-log-out'></i> Close
             </a>
         </div>
     </div>
@@ -187,9 +291,19 @@ if (!$sudah_selesai) {
 
     <header>
         <div class="logo-text">ELMS <span>MARI BELAJAR</span></div>
-        <div class="user-pill">
-            <span class="user-name"><?= $username ?></span>
-            <img src="<?= $user_photo ?>">
+        <div class="account-section">
+            <div class="notif-wrapper" title="Notifikasi">
+                <i class='bx bx-bell' style="font-size: 20px;"></i>
+                <span class="notif-badge">3</span>
+            </div>
+            
+            <div class="user-pill">
+                <div class="user-meta">
+                    <span class="user-name"><?= $username ?></span>
+                    <span class="user-status"><span class="status-dot"></span> Aktif</span>
+                </div>
+                <img src="<?= $user_photo ?>" alt="Profile">
+            </div>
         </div>
     </header>
 
@@ -208,13 +322,21 @@ if (!$sudah_selesai) {
         </div>
 
         <aside class="sidebar">
+            <a href="cetak_kartu.php" class="btn-nav-action" style="background: var(--dark); color: white; margin-bottom: 8px;">
+                <i class='bx bx-printer'></i> Cetak Kartu
+            </a>
+            <a href="login_user.php" class="btn-nav-action" style="background: #ff4757; color: white; margin-bottom: 20px;">
+                <i class='bx bx-exit'></i> Keluar
+            </a>
+            
             <div class="timer-box">
                 <p style="font-size: 10px; font-weight: 800; color: var(--text-light);">SISA WAKTU</p>
                 <h2 id="timer">60:00</h2>
             </div>
             <div class="nav-grid" id="navGrid"></div>
             <div style="margin-top: 30px; text-align: center; border-top: 1px solid #f1f4f9; padding-top: 20px;">
-                <p style="font-size: 10px; color: var(--text-light); font-weight: 700;">&copy; <?= date('Y') ?> ELMS SYSTEM</p>
+                <p style="font-size: 13px; color: var(--text-light); font-weight: 700;">&copy; <?= date('Y') ?> ELMS SYSTEM</p>
+                <p style="font-size: 10px; color: var(--text-light);">Designed by: Candra Argadinata, S.Kom.</p>
             </div>
         </aside>
     </div>
@@ -285,11 +407,24 @@ if (!$sudah_selesai) {
             document.getElementById('btnNext').style.display = (currentIndex === dataSoal.length - 1) ? 'none' : 'flex';
         }
 
-        function nextSoal() { if(currentIndex < dataSoal.length - 1) jumpTo(currentIndex + 1); }
+        function nextSoal() { 
+            if (jawabanUser[currentIndex] === null) {
+                alert("Silahkan pilih jawaban untuk soal nomor " + (currentIndex + 1) + " terlebih dahulu.");
+                return;
+            }
+            if(currentIndex < dataSoal.length - 1) jumpTo(currentIndex + 1); 
+        }
+
         function prevSoal() { if(currentIndex > 0) jumpTo(currentIndex - 1); }
 
         async function finishExam() {
-            // NOTIFIKASI SESUAI SISTEM ASLI
+            let indexKosong = jawabanUser.findIndex(jawaban => jawaban === null);
+            if (indexKosong !== -1) {
+                alert("Ada soal yang belum dijawab (Nomor " + (indexKosong + 1) + "). Silahkan lengkapi semua soal sebelum mengirim.");
+                jumpTo(indexKosong); 
+                return;
+            }
+
             if(!confirm("Kumpulkan jawaban sekarang? Ujian akan langsung dikunci.")) return;
             
             let benar = 0;

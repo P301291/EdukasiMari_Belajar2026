@@ -11,12 +11,11 @@ if (!isset($_SESSION['username'])) { header("location:login.php"); exit(); }
 // --- 2. LOGIKA CRUD ---
 $notifikasi = "";
 
-// LOGIKA TAMBAH USER (Fitur Validasi Dikembalikan & Diperluas)
+// LOGIKA TAMBAH USER
 if (isset($_POST['tambah_user'])) {
     $u = mysqli_real_escape_string($conn, $_POST['username']);
     $p = mysqli_real_escape_string($conn, $_POST['password']);
     
-    // Fitur Cek Duplikasi (Agar data tidak double)
     $cek = mysqli_query($conn, "SELECT * FROM user WHERE username = '$u'");
     if (mysqli_num_rows($cek) > 0) {
         $notifikasi = "<div class='alert danger'><i class='bx bx-error-circle'></i> Username sudah ada!</div>";
@@ -33,7 +32,7 @@ if (isset($_GET['del_id'])) {
     header("Location: Data_user.php?status=deleted"); exit();
 }
 
-// Fitur Mass Delete (Hapus Massal)
+// Fitur Mass Delete
 if (isset($_POST['btn_mass_delete'])) {
     if (!empty($_POST['selected_ids'])) {
         $ids = array_map('intval', $_POST['selected_ids']);
@@ -60,7 +59,7 @@ if (isset($_GET['status'])) {
 
 // --- 3. PAGINATION ---
 $view_all = isset($_GET['view']) && $_GET['view'] == 'all';
-$limit = 2; // Sesuai permintaan awal (2 data per halaman)
+$limit = 5; 
 $page = isset($_GET['p']) ? (int)$_GET['p'] : 1;
 $start = ($page > 1) ? ($page * $limit) - $limit : 0;
 $total_query = mysqli_query($conn, "SELECT COUNT(*) as t FROM user");
@@ -108,14 +107,16 @@ $data_admin = mysqli_query($conn, $sql);
 
         input { width: 100%; padding: 14px; border-radius: 15px; border: 1.5px solid #e2e8f0; outline: none; transition: 0.3s; }
         table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
-        td { padding: 16px 15px; background: #fff; border-top: 1.5px solid #f8fafc; border-bottom: 1.5px solid #f8fafc; font-size: 14px; font-weight: 600; }
+        td, th { padding: 16px 15px; }
+        td { background: #fff; border-top: 1.5px solid #f8fafc; border-bottom: 1.5px solid #f8fafc; font-size: 14px; font-weight: 600; }
         td:first-child { border-radius: 15px 0 0 15px; }
         td:last-child { border-radius: 0 15px 15px 0; }
         .table-avatar { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
 
-        .btn { padding: 12px 24px; border-radius: 14px; border: none; cursor: pointer; font-weight: 700; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn { padding: 12px 24px; border-radius: 14px; border: none; cursor: pointer; font-weight: 700; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
         .btn-p { background: var(--primary); color: white; }
         .btn-d { background: #fee2e2; color: #ef4444; }
+        .btn-s { background: #dcfce7; color: #166534; }
         .alert { padding: 18px; border-radius: 18px; margin-bottom: 25px; font-weight: 700; }
         .alert.success { background: #dcfce7; color: #166534; }
         .alert.danger { background: #fee2e2; color: #991b1b; }
@@ -123,18 +124,33 @@ $data_admin = mysqli_query($conn, $sql);
 
         .modal { display:none; position:fixed; inset:0; background:rgba(11, 15, 25, 0.85); z-index:2000; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
         .modal-box { background: white; padding: 40px; border-radius: 28px; width: 100%; max-width: 450px; }
+
+        /* --- PRINT CSS --- */
+        @media print {
+            .sidebar, .top-header, .stats-grid, #registrasiCard, #liveSearch, .btn, #checkAll, 
+            th:first-child, td:first-child, th:last-child, td:last-child, .pagination-area {
+                display: none !important;
+            }
+            .main-content { margin: 0 !important; padding: 0 !important; }
+            .card { box-shadow: none !important; border: none !important; width: 100% !important; }
+            table { border-spacing: 0; width: 100%; border-collapse: collapse; }
+            td { border: 1px solid #eee !important; padding: 10px !important; }
+            .print-header { display: block !important; text-align: center; margin-bottom: 30px; }
+            code { background: transparent !important; padding: 0 !important; font-family: monospace; color: #000 !important; }
+        }
+        .print-header { display: none; }
     </style>
 </head>
 <body>
 
-<aside class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="logo">ELMS Mari Belajar</div>
         <ul>
             <li><a href="Dashboard.php"><i class='bx bxs-grid-alt'></i> Dashboard</a></li>
             <li><a href="Data_user.php" class="active"><i class='bx bxs-user'></i> Data User</a></li>
             <li><a href="Data_Siswa.php"><i class='bx bxs-user-rectangle'></i> Data Siswa</a></li>
-            <li><a href="Input_soal.php"><i class='bx bxs-lock-open-alt'></i> Input Soal</a></li>
-            <li><a href="Nilai_siswa.php"><i class='bx bxs-color-fill'></i> Nilai Siswa</a></li>
+            <li><a href="Input_soal.php"><i class='bx bxs-file-plus'></i> Input Soal</a></li>
+            <li><a href="Nilai_siswa.php"><i class='bx bxs-bar-chart-alt-2'></i> Nilai Siswa</a></li>
             <li style="margin-top: 40px;"><a href="login.php" style="color: #fb7185;"><i class='bx bx-power-off'></i> Logout</a></li>
         </ul>
     </aside>
@@ -163,12 +179,15 @@ $data_admin = mysqli_query($conn, $sql);
                 <div><p style="color: #a3aed0; font-size: 12px; font-weight: 700;">TOTAL USER</p><h3 style="font-size: 20px;"><?= $total_data ?></h3></div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon" style="background: #dcfce7; color: #22c55e;"><i class='bx bxs-check-shield'></i></div>
-                <div><p style="color: #a3aed0; font-size: 12px; font-weight: 700;">DOMAIN STATUS</p><h3 style="font-size: 20px; color: #22c55e;">Open Access</h3></div>
+                <div class="stat-icon" style="background: #dcfce7; color: #22c55e;"><i class='bx bxs-printer'></i></div>
+                <div>
+                    <p style="color: #a3aed0; font-size: 12px; font-weight: 700;">LAPORAN</p>
+                    <a href="javascript:void(0)" onclick="printAll()" style="text-decoration:none; font-size: 14px; font-weight:800; color: var(--primary);">Cetak Semua User</a>
+                </div>
             </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="registrasiCard">
             <h3 style="margin-bottom: 25px;"><i class='bx bxs-plus-circle'></i> Registrasi Akses</h3>
             <form method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; align-items: end;">
                 <div>
@@ -183,14 +202,26 @@ $data_admin = mysqli_query($conn, $sql);
             </form>
         </div>
 
-        <div class="card">
-            <form method="POST">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px;">
-                    <input type="text" id="liveSearch" placeholder="Cari user..." onkeyup="searchTable()" style="width: 300px;">
-                    <button type="submit" name="btn_mass_delete" class="btn btn-d" onclick="return confirm('Hapus data terpilih?')"><i class='bx bxs-trash-alt'></i> Delete Selected</button>
-                </div>
+        <div class="card" id="printableTable">
+            <div class="print-header">
+                <h2>LAPORAN AKSES USER ELMS</h2>
+                <p>Dicetak pada: <?= date('d-m-Y H:i:s') ?></p>
+                <hr style="margin: 20px 0;">
+            </div>
 
-                <table>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px;">
+                <div onkeypress="return event.keyCode != 13;"> 
+                    <input type="text" id="liveSearch" placeholder="Cari user..." onkeyup="searchTable()" style="width: 300px;">
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-d" onclick="submitMassDelete()"><i class='bx bxs-trash-alt'></i> Delete Selected</button>
+                </div>
+            </div>
+
+            <form method="POST" id="massDeleteForm">
+                <input type="hidden" name="btn_mass_delete" value="1">
+                <table id="mainTable">
                     <thead>
                         <tr style="text-align: left; color: #a3aed0; font-size: 11px;">
                             <th width="50"><input type="checkbox" id="checkAll"></th>
@@ -201,16 +232,17 @@ $data_admin = mysqli_query($conn, $sql);
                     </thead>
                     <tbody id="adminTableBody">
                         <?php while($row = mysqli_fetch_assoc($data_admin)) { ?>
-                        <tr>
+                        <tr id="row-<?= $row['id'] ?>">
                             <td><input type="checkbox" name="selected_ids[]" value="<?= $row['id'] ?>"></td>
                             <td>
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <img src="https://ui-avatars.com/api/?name=<?= urlencode($row['username']) ?>&background=random&color=fff&bold=true" class="table-avatar">
-                                    <span><?= $row['username'] ?></span>
+                                    <span class="uname"><?= $row['username'] ?></span>
                                 </div>
                             </td>
-                            <td><code style="color: #64748b; background: #f8fafc; padding: 6px 10px; border-radius: 8px;"><?= $row['password'] ?></code></td>
+                            <td><code class="upass" style="color: #64748b; background: #f8fafc; padding: 6px 10px; border-radius: 8px;"><?= $row['password'] ?></code></td>
                             <td style="text-align: center;">
+                                <button type="button" class="btn" style="background: #f0f9ff; color: #0369a1; padding: 10px;" onclick="printSingle('<?= $row['id'] ?>')"><i class='bx bxs-printer'></i></button>
                                 <button type="button" class="btn" style="background: #fffbeb; color: #d97706; padding: 10px;" onclick="openEdit('<?= $row['id'] ?>', '<?= $row['username'] ?>', '<?= $row['password'] ?>')"><i class='bx bxs-edit-alt'></i></button>
                                 <a href="?del_id=<?= $row['id'] ?>" class="btn btn-d" style="padding: 10px;" onclick="return confirm('Hapus?')"><i class='bx bxs-trash'></i></a>
                             </td>
@@ -218,20 +250,20 @@ $data_admin = mysqli_query($conn, $sql);
                         <?php } ?>
                     </tbody>
                 </table>
-
-                <div style="margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
-                    <?php if (!$view_all): ?>
-                    <div style="display: flex; gap: 8px;">
-                        <?php for($i=1; $i<=$pages; $i++): ?>
-                            <a href="?p=<?= $i ?>" style="text-decoration:none; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid #e2e8f0; background:<?= ($page==$i)?'var(--primary)':'white' ?>; color:<?= ($page==$i)?'white':'var(--text-color)' ?>; font-weight:700;"><?= $i ?></a>
-                        <?php endfor; ?>
-                    </div>
-                    <a href="?view=all" class="btn" style="background: #e0e7ff; color: var(--primary); width: 100%; justify-content: center;">Tampilkan Semua Data (<?= $total_data ?>)</a>
-                    <?php else: ?>
-                    <a href="Data_user.php" class="btn" style="background: #f1f5f9; color: #64748b; width: 100%; justify-content: center;">Kembali ke Pagination</a>
-                    <?php endif; ?>
-                </div>
             </form>
+
+            <div class="pagination-area" style="margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                <?php if (!$view_all): ?>
+                <div style="display: flex; gap: 8px;">
+                    <?php for($i=1; $i<=$pages; $i++): ?>
+                        <a href="?p=<?= $i ?>" style="text-decoration:none; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid #e2e8f0; background:<?= ($page==$i)?'var(--primary)':'white' ?>; color:<?= ($page==$i)?'white':'var(--text-color)' ?>; font-weight:700;"><?= $i ?></a>
+                    <?php endfor; ?>
+                </div>
+                <a href="?view=all" class="btn" style="background: #e0e7ff; color: var(--primary); width: 100%; justify-content: center;">Tampilkan Semua Data (<?= $total_data ?>)</a>
+                <?php else: ?>
+                <a href="Data_user.php" class="btn" style="background: #f1f5f9; color: #64748b; width: 100%; justify-content: center;">Kembali ke Pagination</a>
+                <?php endif; ?>
+            </div>
         </div>
     </main>
 
@@ -257,6 +289,66 @@ $data_admin = mysqli_query($conn, $sql);
     </div>
 
     <script>
+        function submitMassDelete() {
+            const form = document.getElementById('massDeleteForm');
+            const checkboxes = document.getElementsByName('selected_ids[]');
+            let checked = false;
+            for (let i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].checked) { checked = true; break; }
+            }
+            if (!checked) { alert("Pilih data yang ingin dihapus terlebih dahulu!"); return; }
+            if (confirm('Hapus data terpilih?')) { form.submit(); }
+        }
+
+        function printAll() {
+            const isViewAll = <?= json_encode($view_all) ?>;
+            if (!isViewAll) {
+                if (confirm("Untuk mencetak SELURUH data, sistem harus memuat semua data terlebih dahulu. Lanjutkan?")) {
+                    window.location.href = "?view=all&triggerPrint=true";
+                }
+            } else { window.print(); }
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('triggerPrint') === 'true') { window.print(); }
+        }
+
+        function printSingle(id) {
+            const row = document.getElementById('row-' + id);
+            const name = row.querySelector('.uname').innerText;
+            const pass = row.querySelector('.upass').innerText;
+            
+            const printWin = window.open('', '', 'width=600,height=400');
+            printWin.document.write(`
+                <html>
+                <head>
+                    <title>Cetak Password - ${name}</title>
+                    <style>
+                        body { font-family: sans-serif; padding: 40px; text-align: center; border: 2px dashed #4361ee; margin: 20px; }
+                        h2 { color: #4361ee; margin-bottom: 5px; }
+                        .box { background: #f4f7fe; padding: 20px; border-radius: 10px; margin-top: 20px; }
+                        .label { font-size: 12px; color: #666; font-weight: bold; }
+                        .value { font-size: 20px; font-weight: 800; color: #2b3674; margin-bottom: 15px; }
+                    </style>
+                </head>
+                <body>
+                    <h2>AKSES LOGIN ELMS</h2>
+                    <p>Simpan data ini dengan aman</p>
+                    <div class="box">
+                        <div class="label">USERNAME</div>
+                        <div class="value">${name}</div>
+                        <div class="label">PASSWORD / ACCESS KEY</div>
+                        <div class="value">${pass}</div>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWin.document.close();
+            printWin.print();
+            printWin.close();
+        }
+
         const sidebar = document.getElementById('sidebar');
         const main = document.getElementById('main');
         document.getElementById('toggle-sidebar').onclick = () => {

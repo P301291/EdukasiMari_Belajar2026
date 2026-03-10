@@ -46,9 +46,7 @@ session_start();
             color: #fff;
             letter-spacing: -1px;
         }
-        .brand-header h1 span {
-            color: var(--elms-primary);
-        }
+        .brand-header h1 span { color: var(--elms-primary); }
         .brand-header p {
             color: var(--elms-text-muted);
             font-size: 14px;
@@ -128,13 +126,27 @@ session_start();
         .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--elms-text-muted); margin-bottom: 8px; text-transform: uppercase; }
         
         .input-box { position: relative; }
-        .input-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--elms-primary); }
+        .input-box i:first-child { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--elms-primary); }
+        
         .elms-input {
             width: 100%; height: 50px; background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
-            padding-left: 45px; color: #fff; outline: none; transition: 0.3s;
+            padding: 0 45px; color: #fff; outline: none; transition: 0.3s;
         }
         .elms-input:focus { border-color: var(--elms-primary); background: rgba(67, 97, 238, 0.05); }
+
+        /* STYLE FITUR LIHAT PASSWORD */
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--elms-text-muted);
+            font-size: 20px;
+            transition: 0.3s;
+        }
+        .password-toggle:hover { color: var(--elms-primary); }
 
         .elms-btn {
             width: 100%; height: 50px; background: var(--elms-primary); color: #fff;
@@ -145,7 +157,6 @@ session_start();
 
         .back-link { display: block; text-align: center; margin-top: 20px; color: var(--elms-text-muted); text-decoration: none; font-size: 13px; }
 
-        /* --- ANIMATIONS --- */
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -213,7 +224,8 @@ session_start();
                     <label>Password</label>
                     <div class="input-box">
                         <i class='bx bxs-lock-alt'></i>
-                        <input type="password" name="password" class="elms-input" placeholder="Ketik Password..." required>
+                        <input type="password" name="password" id="passwordInput" class="elms-input" placeholder="Ketik Password..." required>
+                        <i class='bx bx-hide password-toggle' id="toggleIcon" onclick="togglePassword()"></i>
                     </div>
                 </div>
 
@@ -227,6 +239,7 @@ session_start();
     </div>
 
     <script>
+        // Fitur Loading Screen
         window.addEventListener('load', function() {
             setTimeout(function() {
                 const ls = document.getElementById('loading-screen');
@@ -234,6 +247,22 @@ session_start();
                 setTimeout(() => ls.style.display = 'none', 600);
             }, 600);
         });
+
+        // Fitur Show/Hide Password
+        function togglePassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('bx-hide');
+                toggleIcon.classList.add('bx-show');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('bx-show');
+                toggleIcon.classList.add('bx-hide');
+            }
+        }
     </script>
 </body> 
 </html>

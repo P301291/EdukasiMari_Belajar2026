@@ -10,9 +10,9 @@ if (!isset($_SESSION['username'])) { header("location:login.php"); exit(); }
 
 // --- 2. LOGIKA CLOCK & OPERASIONAL ---
 date_default_timezone_set('Asia/Jakarta');
-$jam_sekarang = date('H');
-// Pendaftaran dibuka jam 06:00 sampai 21:59 (Tutup jam 18:00)
-$is_open = ($jam_sekarang >= 6 && $jam_sekarang < 24); 
+$jam_sekarang = (int)date('H');
+// Pendaftaran dibuka jam 06:00 sampai 17:59 (Tutup jam 18:00)
+$is_open = ($jam_sekarang >= 6 && $jam_sekarang < 18); 
 
 // --- 3. LOGIKA CRUD SISWA ELMS ---
 $notifikasi = "";
@@ -35,7 +35,7 @@ if (isset($_POST['tambah_siswa'])) {
             $notifikasi = "<div class='alert danger'><i class='bx bx-error-circle'></i> Registrasi gagal! Gunakan alamat Gmail.</div>";
         }
     } else {
-        $notifikasi = "<div class='alert danger'><i class='bx bx-time-five'></i> Maaf, pendaftaran sudah ditutup (22:00 - 06:00 WIB).</div>";
+        $notifikasi = "<div class='alert danger'><i class='bx bx-time-five'></i> Maaf, pendaftaran sudah ditutup (18:00 - 06:00 WIB).</div>";
     }
 }
 
@@ -78,7 +78,6 @@ $res_kelas = mysqli_query($conn, "SELECT kelas, COUNT(*) as jumlah FROM siswa_el
 while($row_k = mysqli_fetch_assoc($res_kelas)) {
     $count_per_kelas[$row_k['kelas']] = $row_k['jumlah'];
 }
-// List kelas termasuk 'Kuliah' untuk mapping distribusi
 $list_semua_kelas = ['VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'Kuliah'];
 
 // --- 5. DATA, PAGINATION & ALL PAGE ---
@@ -162,14 +161,14 @@ $data_siswa = mysqli_query($conn, $sql);
 </head>
 <body>
 
-<aside class="sidebar" id="sidebar">
-        <div class="logo"><i class='#' style="color: var(--accent);"></i>ELMS Mari Belajar</div>
+    <aside class="sidebar" id="sidebar">
+        <div class="logo"><i class='bx bxs-graduation' style="color: var(--accent);"></i>ELMS Mari Belajar</div>
         <ul>
-            <li><a href="Dashboard.php" ><i class='bx bxs-grid-alt'></i> Dashboard</a></li>
+            <li><a href="Dashboard.php"><i class='bx bxs-grid-alt'></i> Dashboard</a></li>
             <li><a href="Data_user.php"><i class='bx bxs-user'></i> Data User</a></li>
-            <li><a href="Data_Siswa.php"class="active"><i class='bx bxs-user-rectangle'></i> Data Siswa</a></li>
-            <li><a href="Input_soal.php"><i class='bx bxs-lock-open-alt'></i> Input Soal</a></li>
-            <li><a href="Nilai_siswa.php"><i class='bx bxs-color-fill'></i> Nilai Siswa</a></li>
+            <li><a href="Data_Siswa.php" class="active"><i class='bx bxs-user-rectangle'></i> Data Siswa</a></li>
+            <li><a href="Input_soal.php"><i class='bx bxs-file-plus'></i> Input Soal</a></li>
+            <li><a href="Nilai_siswa.php"><i class='bx bxs-bar-chart-alt-2'></i> Nilai Siswa</a></li>
             <li style="margin-top: 40px;"><a href="login.php" style="color: #fb7185;"><i class='bx bx-power-off'></i> Logout</a></li>
         </ul>
     </aside>
@@ -180,8 +179,8 @@ $data_siswa = mysqli_query($conn, $sql);
                 <i class='bx bx-category-alt' id="toggle-sidebar" style="font-size: 28px; cursor: pointer; color: var(--primary);"></i>
                 <h1 style="font-size: 20px; font-weight: 800;">Manajemen Pendaftar ELMS</h1>
             </div>
-            <div style="font-weight: 700; color: var(--primary); background: #e0e7ff; padding: 8px 15px; border-radius: 12px;">
-                Waktu: <?= date('H:i') ?> WIB
+            <div id="realtime-clock" style="font-weight: 700; color: var(--primary); background: #e0e7ff; padding: 8px 15px; border-radius: 12px;">
+                Waktu: --:--:-- WIB
             </div>
         </div>
 
@@ -354,11 +353,28 @@ $data_siswa = mysqli_query($conn, $sql);
     </div>
 
     <script>
+        // --- Fungsi Jam Real-Time ---
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            const clockElement = document.getElementById('realtime-clock');
+            if (clockElement) {
+                clockElement.innerHTML = `Waktu: ${hours}:${minutes}:${seconds} WIB`;
+            }
+        }
+        setInterval(updateClock, 1000);
+        updateClock(); // Panggil langsung agar tidak delay
+
+        // --- Sidebar Toggle ---
         document.getElementById('toggle-sidebar').onclick = () => {
             document.getElementById('sidebar').classList.toggle('collapsed');
             document.getElementById('main').classList.toggle('expanded');
         }
 
+        // --- Live Search ---
         function searchTable() {
             let filter = document.getElementById("liveSearch").value.toUpperCase();
             let tr = document.getElementById("siswaTableBody").getElementsByTagName("tr");
@@ -368,11 +384,13 @@ $data_siswa = mysqli_query($conn, $sql);
             }
         }
 
+        // --- Checkbox All ---
         document.getElementById('checkAll').onclick = function() {
             let boxes = document.getElementsByName('selected_ids[]');
             for (let box of boxes) { box.checked = this.checked; }
         }
 
+        // --- Modal Logic ---
         function openEdit(id, nisn, nama, status) {
             document.getElementById('editModal').style.display = 'flex';
             document.getElementById('id_e').value = id;

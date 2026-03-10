@@ -26,11 +26,11 @@ if ($stmt) {
     if ($result->num_rows > 0) { 
         // Login Berhasil
         $_SESSION['username'] = $username; 
-        header("Location: Ujian.php"); 
+        header("Location: Pembelajaran_video.php"); 
         exit(); // Selalu gunakan exit setelah header location
     } else { 
         // Login Gagal
-        echo "<center>Login gagal. <a href='Login.php'>Coba lagi</a></center>"; 
+        echo "<center>Login gagal. <a href='login_user.php'>Coba lagi</a></center>"; 
     } 
 
     $stmt->close();

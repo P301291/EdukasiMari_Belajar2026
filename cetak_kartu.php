@@ -48,6 +48,7 @@ window.onkeypress = resetIdleTimer;
 // Kirim laporan ke server setiap 10 detik
 setInterval(sendHeartbeat, 10000);
 </script>
+
 <?php
 
 include 'koneksi.php';

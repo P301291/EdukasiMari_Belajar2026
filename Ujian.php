@@ -19,6 +19,87 @@ if (isset($_SESSION['username'])) {
 }
 ?>
 <script>
+// Fungsi untuk mengirim laporan ke database secara diam-diam (background)
+function laporKeAdmin(pesan) {
+    fetch('update_status.php?pesan=' + encodeURIComponent(pesan));
+}
+
+// 1. Deteksi jika siswa pindah tab atau meminimalkan browser
+document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+        laporKeAdmin("Pindah Tab / Buka Web Lain");
+    } else {
+        laporKeAdmin("Kembali ke Ujian");
+    }
+});
+
+// 2. Deteksi jika kursor keluar dari area jendela browser (opsional)
+window.addEventListener("blur", function() {
+    laporKeAdmin("Keluar dari Jendela Ujian");
+});
+
+// 3. Deteksi upaya Copy-Paste soal
+document.addEventListener('copy', (event) => {
+    laporKeAdmin("Mencoba COPY Soal");
+});
+document.addEventListener('paste', (event) => {
+    laporKeAdmin("Mencoba PASTE Jawaban");
+});
+
+// 4. Blokir Klik Kanan agar tidak bisa inspeksi elemen
+document.addEventListener('contextmenu', event => {
+    event.preventDefault();
+    laporKeAdmin("Mencoba Klik Kanan");
+});
+</script><script>
+    // 1. Inisialisasi Audio dengan Preload
+    const audioAlarm = new Audio('alert.mp3');
+    audioAlarm.preload = 'auto';
+    audioAlarm.loop = false; // Set true jika ingin bunyi terus-menerus
+
+    // 2. FUNGSI PENTING: Unlock Audio
+    // Browser butuh interaksi user (klik) agar suara diizinkan bunyi nanti
+    document.addEventListener('click', function() {
+        audioAlarm.play().then(() => {
+            audioAlarm.pause(); // Putar sebentar lalu pause untuk memancing izin browser
+            audioAlarm.currentTime = 0;
+            console.log("Audio Unlocked & Ready!");
+        }).catch(e => console.log("Menunggu interaksi pertama..."));
+    }, { once: true }); // Hanya jalan sekali klik saja
+
+    function aksiPelanggaran(pesan) {
+        // Mainkan suara dengan penanganan error
+        const playPromise = audioAlarm.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(_ => {
+                console.log("Alarm Berbunyi!");
+            }).catch(error => {
+                console.log("Gagal bunyi: Browser memblokir autoplay. Pastikan siswa sudah klik halaman.");
+            });
+        }
+
+        // Kirim data ke database
+        fetch('update_status.php?pesan=' + encodeURIComponent(pesan))
+            .then(response => console.log("Laporan terkirim"))
+            .catch(err => console.error("Gagal kirim laporan"));
+        
+        // Tampilkan pesan ke siswa
+        alert("⚠️ PERINGATAN KERAS: " + pesan);
+    }
+
+    // --- DETEKSI ---
+    document.addEventListener("visibilitychange", function() {
+        if (document.hidden) {
+            aksiPelanggaran("Pindah Tab / Minimize");
+        }
+    });
+
+    document.addEventListener('copy', (e) => {
+        aksiPelanggaran("Mencoba COPY Soal");
+    });
+</script>
+<script>
 let userStatus = "Active";
 let idleTimer;
 

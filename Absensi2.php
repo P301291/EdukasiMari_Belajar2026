@@ -18,6 +18,7 @@ if (isset($_SESSION['username'])) {
         WHERE username = '$u'");
 }
 ?>
+
 <script>
 let userStatus = "Active";
 let idleTimer;
